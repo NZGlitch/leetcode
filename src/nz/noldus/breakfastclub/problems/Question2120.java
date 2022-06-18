@@ -1,4 +1,5 @@
-//There is an n x n grid, with the top-left cell at (0, 0) and the bottom-right 
+package nz.noldus.breakfastclub.problems;
+//There is an n x n grid, with the top-left cell at (0, 0) and the bottom-right
 //cell at (n - 1, n - 1). You are given the integer n and an integer array 
 //startPos where startPos = [startrow, startcol] indicates that a robot is initially at 
 //cell (startrow, startcol). 
@@ -74,52 +75,61 @@
 // 
 // Related Topics String Simulation 👍 274 👎 26
 
-
-//leetcode submit region begin(Prohibit modification and deletion)
-class Solution {
-    public int[] executeInstructions(int n, int[] startPos, String s) {
-        Pos root = new Pos(startPos, null);
-        int res[] = new int[s.length()];
-        for (int i = s.length()-1; i>=0; i--) {
-            root.applyMove(s.charAt(i));
-            root = new Pos(startPos, root);
-            res[i] = root.next.validMoves(n);
-        }
-        return res;
-    }
-
-    class Pos {
-        int x;
-        int y;
-        final Pos next;
-
-        Pos(int[] startPos, Pos next) {
-            this.y = startPos[0];
-            this.x = startPos[1];
-            this.next = next;
-        }
-
-        void applyMove(char m) {
-            switch (m) {
-                case 'L': this.x--; break;
-                case 'R': this.x++; break;
-                case 'U': this.y--; break;
-                case 'D': this.y++; break;
+class Question2120 {
+    //leetcode submit region begin(Prohibit modification and deletion)
+    class Solution {
+        public int[] executeInstructions(int n, int[] startPos, String s) {
+            Pos root = new Pos(startPos, null);
+            int res[] = new int[s.length()];
+            for (int i = s.length() - 1; i >= 0; i--) {
+                root.applyMove(s.charAt(i));
+                root = new Pos(startPos, root);
+                res[i] = root.next.validMoves(n);
             }
-            if (next != null) next.applyMove(m);
+            return res;
         }
 
-        int validMoves(int n) {
-            if (!(this.x >= 0 && this.y >= 0 && this.x < n && this.y < n))
-                return 0;
-            return (next == null) ? 1 : 1+next.validMoves(n);
-        }
+        class Pos {
+            int x;
+            int y;
+            final Pos next;
+
+            Pos(int[] startPos, Pos next) {
+                this.y = startPos[0];
+                this.x = startPos[1];
+                this.next = next;
+            }
+
+            void applyMove(char m) {
+                switch (m) {
+                    case 'L':
+                        this.x--;
+                        break;
+                    case 'R':
+                        this.x++;
+                        break;
+                    case 'U':
+                        this.y--;
+                        break;
+                    case 'D':
+                        this.y++;
+                        break;
+                }
+                if (next != null) next.applyMove(m);
+            }
+
+            int validMoves(int n) {
+                if (!(this.x >= 0 && this.y >= 0 && this.x < n && this.y < n))
+                    return 0;
+                return (next == null) ? 1 : 1 + next.validMoves(n);
+            }
 
 //        public String toString() {
 //            String s =  "-("+x+","+y+")-";
 //            if (next == null) return s;
 //            else return s+next.toString();
 //        }
+        }
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)

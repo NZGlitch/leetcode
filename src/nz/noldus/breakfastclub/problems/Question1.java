@@ -1,4 +1,5 @@
-//Given an array of integers nums and an integer target, return indices of the 
+package nz.noldus.breakfastclub.problems;
+//Given an array of integers nums and an integer target, return indices of the
 //two numbers such that they add up to target. 
 //
 // You may assume that each input would have exactly one solution, and you may 
@@ -43,11 +44,12 @@
 //Follow-up: Can you come up with an algorithm that is less than O(n²) time 
 //complexity? Related Topics Array Hash Table 👍 33416 👎 1059
 
-
-//leetcode submit region begin(Prohibit modification and deletion)
-class Solution {
-    public int[] twoSum(int[] nums, int target) {
-        
+class Question1 {
+    //leetcode submit region begin(Prohibit modification and deletion)
+    class Solution {
+        public int[] twoSum(int[] nums, int target) {
+            return null;
+        }
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)

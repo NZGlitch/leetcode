@@ -1,4 +1,5 @@
-//You are given an integer array prices representing the daily price history of 
+package nz.noldus.breakfastclub.problems;
+//You are given an integer array prices representing the daily price history of
 //a stock, where prices[i] is the stock price on the iᵗʰ day. 
 //
 // A smooth descent period of a stock consists of one or more contiguous days 
@@ -44,19 +45,20 @@
 // 
 // Related Topics Array Math Dynamic Programming 👍 368 👎 13
 
-
-//leetcode submit region begin(Prohibit modification and deletion)
-class Solution {
-    public long getDescentPeriods(int[] prices) {
-        long yCount=1,sum=1;
-        for (int i =1; i<prices.length; i++) {
-            if (prices[i-1] - prices[i] == 1)
-                yCount++;
-            else
-                yCount = 1;
-            sum+=yCount;
+class Question2110 {
+    //leetcode submit region begin(Prohibit modification and deletion)
+    class Solution {
+        public long getDescentPeriods(int[] prices) {
+            long yCount = 1, sum = 1;
+            for (int i = 1; i < prices.length; i++) {
+                if (prices[i - 1] - prices[i] == 1)
+                    yCount++;
+                else
+                    yCount = 1;
+                sum += yCount;
+            }
+            return sum;
         }
-        return sum;
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
