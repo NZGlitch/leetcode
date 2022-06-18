@@ -52,6 +52,8 @@ package nz.noldus.breakfastclub.problems;
 // 
 // Related Topics Array Hash Table Simulation 👍 282 👎 13
 
+import com.sun.codemodel.internal.JForEach;
+
 import java.util.*;
 
 class Question2295 {
@@ -59,50 +61,25 @@ class Question2295 {
     //leetcode submit region begin(Prohibit modification and deletion)
     class Solution {
         public int[] arrayChange(int[] n, int[][] o) {
+            //Create a hash table of nums
+            Map<Integer, Integer> hashTable = new HashMap<>();
+            for (int i=0;i<n.length;i++) hashTable.put(n[i],i);
 
-            //First construct a map of possible operations
-            Map<Integer, OpList> ops = new HashMap<>();
-            for (int i = 0; i< o.length; i++) {
-                if (!ops.containsKey(o[i][0])) ops.put(o[i][0], new OpList());
-                ops.get(o[i][0]).add(new Op(o[i][1], i));
+            //Apply ops
+            for (int i=0;i<o.length;i++) {
+                int idx = hashTable.remove(o[i][0]);
+                hashTable.put(o[i][1], idx);
             }
-            
-            //Iterate through nums applying all appropriate ops to each element
-            for (int i=0; i<n.length; i++) {
-                int idx = -1;                       // Current op index
-                while (ops.containsKey(n[i])) {     // Is there an op for this value?
-                    Op op = ops.get(n[i]).getFirstAfter(idx); // get the first available op after the current idx
-                    if (op == null) break;          //We can't apply this op, so no more to do
-                    idx = op.i;                     // update op index
-                    n[i] = op.r;                    // apply change
-                }
+
+            //save back to array
+            for(Map.Entry e : hashTable.entrySet()) {
+                n[(int)e.getValue()] = (int)e.getKey();
             }
+
             return n;
         }
     }
 
-
-    class OpList {
-        ArrayList<Op> ops;
-
-        public OpList() {ops = new ArrayList();}
-        public void add(Op o) {ops.add(o);}
-        public Op getFirstAfter(int idx) {
-            for (int i = 0; i< ops.size(); i++) {
-                if (ops.get(i).i > idx) return ops.get(i);
-            }
-            return null;
-        }
-    }
-
-    class Op {
-        final int r; // replacement
-        final int i; // index
-
-        public Op(int r, int i) {
-            this.r=r; this.i=i;
-        }
-    }
 //leetcode submit region end(Prohibit modification and deletion)
 
 }
