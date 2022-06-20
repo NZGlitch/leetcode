@@ -1,4 +1,5 @@
-//Write an algorithm to determine if a number n is happy. 
+package nz.noldus.breakfastclub.problems;
+//Write an algorithm to determine if a number n is happy.
 //
 // A happy number is a number defined by the following process: 
 //
@@ -41,10 +42,7 @@
 // Related Topics Hash Table Math Two Pointers 👍 5651 👎 729
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class Question202 {
     //leetcode submit region begin(Prohibit modification and deletion)
