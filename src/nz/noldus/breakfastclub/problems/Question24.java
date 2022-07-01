@@ -52,11 +52,11 @@ class Solution {
         if (head == null) return head;
         if (head.next == null) return head;
 
-        ListNode newHead = head.next;           // The new head is the next node (1->[2]->3->4)
-        ListNode remainder = newHead.next;      // The remainder is the next nodes next node (2->[3]->...)
-        newHead.next = head;                    // Point new nodes head to the current head (2[->]1->2->...)
-        head.next = swapPairs(remainder);       // Point the oringinal heads next node to the remainder (2->1[->]3->...)
-        return newHead;                         // Return the new head (2->1->4->3)
+        ListNode newHead = head.next;      // The new head is the next node (1->[2]->Rest)
+        ListNode rest = newHead.next;      // The rest is the next nodes next node (2->[Rest])
+        newHead.next = head;               // Point new nodes head to the current head (2[->]1->2->1...)
+        head.next = swapPairs(rest);       // Point the oringinal heads next node to the rest (2->1[->][Rest])
+        return newHead;                    // Return the new head ([2]->1->Rest)
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
