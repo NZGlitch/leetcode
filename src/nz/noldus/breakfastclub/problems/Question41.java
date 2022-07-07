@@ -29,15 +29,42 @@ class Question41 {
     //leetcode submit region begin(Prohibit modification and deletion)
 class Solution {
     public int firstMissingPositive(int[] nums) {
-        boolean[] hash = new boolean[500001];
+        /**
+         * The key to this question is the requirement that the algorihm must work in constant space and O(n) time
+         * This gives us a couple of really useful hints:
+         *   1) We can not have any nested loops
+         *   2) We can only use fixed size data storage (arrays)
+         *
+         * The strategy is pretty straight forward, from the problem description we know that the nums array can be at
+         * most 500,000 numbers, therefore the highest possible answer (where the array we are given has all the
+         * positive intergers from 1 -> 500,000 ) is 500,001. So we just create 500,000 boolean buckets, all set to
+         * false. When we see anumber we change that bucket to true. We then look for the first bucket that has a false
+         * and it's index will be the number we are looking for.
+         *
+         * Because 0 is irrelevant, we can save one bucket of space by having bucket[i] for the number i+1.
+         *
+         * Optimisations: We can keep an incremental count of numbers seen 'in order' to reduce the size of the
+         * check loop
+         *
+         * We only need at most n buckets where n is the length of nums
+         */
+
+        boolean[] buckets = new boolean[Math.min(nums.length,500000)];  // Hash to record numbers we've seen
+        int minSeen = 0;                                                //Optimisation, allows us to skip some numbers when checking
         for (int i=0; i< nums.length; i++) {
-            if (nums[i] > hash.length) continue;
-            if (nums[i] >= 0) hash[nums[i]] = true;
+            if (nums[i] <= 0 || nums[i] > buckets.length) continue;     // Watch out for numbers outside the bucket range
+            buckets[nums[i]-1] = true;                                  // Note that we have seen this number
+            if (nums[i] == minSeen+1) minSeen++;
         }
-        for (int i=1; i<hash.length; i++) {
-            if (!hash[i]) return i;
+
+        // Look for the first 'false' bucket
+        for (int i=minSeen; i<buckets.length; i++) {
+            if (!buckets[i]) return i+1;           // We havent seen this number, so it is the answer
         }
-        return 500001;
+
+        // This is the case where every bucket is true, the only possible answer is n+1
+        return buckets.length+1;
+
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
