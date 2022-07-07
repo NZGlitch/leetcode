@@ -37,27 +37,35 @@
 class Question74 {
     //leetcode submit region begin(Prohibit modification and deletion)
 class Solution {
+
     public boolean searchMatrix(int[][] matrix, int target) {
+        // We can use binary search to find the row the answer must reside in
         int row = findRow(matrix, target, 0, matrix.length-1);
+
+        // We can use binary search to find the target in optimal time
         int index = Arrays.binarySearch(matrix[row], target);
+
+        // If index is < 0 then we couldnt find the target
         return index >= 0;
     }
 
     public int findRow(int[][] matrix, int target, int low, int high) {
+        // Build in binary search is not optimal for finding the row, we would need to
+        // create a new array of indexes, so instead we implement binary search ourselves
 
-        if (low >= high) return low;
+        if (low >= high) return low;        //Base case = only 1 row to look at, must be the one
 
-        //get the mid point
+        // Get the mid point
         int mid = (low+high) / 2;
 
+        // Is the answer in the current mid row?
+        if (target >= matrix[mid][0] && target <= matrix[mid][matrix[mid].length-1]) return mid;
+
         //check if target < r[mid][0] , if so, search r[low]->r[mid-1]
-        if (target < matrix[mid][0]) return findRow(matrix, target, low, mid-1);
+        else if (target < matrix[mid][0]) return findRow(matrix, target, low, mid-1);
 
         //check if target > r[mid][n], if so search r[mid+1][high]
-        else if (matrix[mid][matrix[mid].length-1] < target) return findRow(matrix, target, mid+1, high);
-
-        //Mid is the index to search
-        return mid;
+        else return findRow(matrix, target, mid+1, high);
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
