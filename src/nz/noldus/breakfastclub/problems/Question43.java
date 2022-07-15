@@ -57,9 +57,8 @@ class Question43 {
         for (int i = 0; i<shrt.length; i++) {
             // Multiply each character in short by each character in long
             for (int j=0; j<lng.length; j++) {
-                char[] prd = mul(shrt[i], lng[j]);
-                // Add this to our running total
-                sum(product, prd, i+j);
+                // Add the sum of these values to the current product array
+                sum(product, shrt[i]* lng[j], i+j);
             }
         }
 
@@ -77,33 +76,33 @@ class Question43 {
 
     }
 
-    // Given two char 'numbers' return a char array of thier product
-    char[] mul(char a, char b) {
-        int p = a*b;
-        return new char[] {
-                (char)(p%10),
-                (char)(p/10)
-        };
-    }
-
-
     /**
      * Perform accum = accum+val
      * accum: an array of digits
      * val: an array of digits MUST BE exaclty 2 values
      * offset: how many places to shift val
       */
-    void sum(char[] accum, char[] val, int offset) {
-        int s1,s2,s3 = 0;
-        s1 = val[0] + accum[offset];
-        s2 = s1/10;
-        s1 = s1%10;
-        s2+= val[1] + accum[offset+1];
-        s3 = s2/10;
-        s2 = s2%10;
-        accum[offset] = (char)s1;
-        accum[offset+1] = (char)s2;
-        accum[offset+2]+= (char)s3;
+    void sum(char[] accum, int add, int offset) {
+
+        //TODO - get rid of this array
+        char[] val = new char[] {
+                (char)((add)%10),
+                (char)((add)/10)
+        };
+        int validx = 0;
+        int accumidx = offset;
+        int v=0,a=0,r=0,c=0;
+
+        // Basically doing pen+paper addition one digit at a time until there are
+        // no more carry overs.
+        do {
+            v = (validx <=1) ? val[validx++] : 0;
+            a = accum[accumidx];
+            r = (v+a+c)%10;
+            c = (v+a+c)/10;
+            accum[accumidx++] = (char)r;
+
+        } while (validx < 2 || c != 0);
     }
 
     // Helper method for converting a char array to a string
