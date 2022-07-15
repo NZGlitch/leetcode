@@ -33,84 +33,90 @@ class Question43 {
 
     public  class Solution {
     public String multiply(String n1, String n2) {
-
         // A string is just a character array, so lets use that
         // We want t be 'little endian' so we need to reverse the strings first
-        char[] shrt; char[] lng;
-        if (n1.length() > n2.length()) {
-            lng = new StringBuilder(n2).reverse().toString().toCharArray();
-            shrt = new StringBuilder(n1).reverse().toString().toCharArray();
-        } else {
-            shrt = new StringBuilder(n2).reverse().toString().toCharArray();
-            lng = new StringBuilder(n1).reverse().toString().toCharArray();
+        char[] a = stringToReversedIntCharArray(n1);
+        char[] b = stringToReversedIntCharArray(n2);
+
+        // We want to have the shorter number in the outside llop, both for efficiency, and to prevent
+        // index out of bounds issues - so swap them if they are the wrong way around
+        if (a.length > b.length) {
+            char[] c = a;
+            a=b;
+            b=c;
         }
 
-        // A place to store the overall result
-        char[] product = new char[shrt.length+lng.length+1];
+        // A place to store the overall result. Max length is a.len + b.len
+        char[] product = new char[a.length+b.length];
 
-        // Convert our byte arrays to numbers (in the ascii table, subtrcing 48 from a
-        // char gives you its integer value
-        for (int i =0; i<shrt.length; i++) shrt[i] = (char)(shrt[i]-48);
-        for (int i =0; i<lng.length; i++) lng[i] = (char)(lng[i]-48);
+        // Iterate through each digit in the shorter number
+        for (int i = 0; i<a.length; i++) {
 
-        // Iterate through each number in 'short'
-        for (int i = 0; i<shrt.length; i++) {
-            // Multiply each character in short by each character in long
-            for (int j=0; j<lng.length; j++) {
+            // Multiply each digit in a by each digit in b
+            for (int j=0; j<b.length; j++) {
                 // Add the sum of these values to the current product array
-                sum(product, shrt[i]* lng[j], i+j);
+                // The offset is how many 'places' we need to shift the result of the multiplication
+                // to have it in the right place
+                sum(product, a[i]* b[j], i+j);
             }
         }
 
+        //TODO use streams here if possible
+
+
         // Convert product array back to chars
-        for (int i =0; i<product.length; i++) product[i] = (char)(product[i]+48);
+        int indexLastNonZero = 0;       //need this to remove leading zeros later
+        String result = "";
+        for (int i = 0; i < product.length; i++) {
+            int v = product[i];
+            if (v != 0) indexLastNonZero = i;
+            result = (char)(v+48) + result;
+        }
 
-        // Convert product back to a string (dont forget to reverse)
-        String res = new StringBuilder(new String(product))
-                .reverse()
-                .toString();
-
-        // Finally, remove leading zeros
-        return res.replaceFirst("^0+(?!$)", "");
-
-
+        //remove leading zeros
+        if (indexLastNonZero != result.length()-1) result = result.substring(result.length()-1-indexLastNonZero);
+        return result;
     }
 
+        /**
+         * Converst the string to something more usable - in this case a char[] with
+         * the value being the actual int value of a digit in the string, and the digits
+         * reveresed so we have the right 'endyness'
+         */
+
+        char [] stringToReversedIntCharArray(String s) {
+            char[] res = new char[s.length()];
+            for (int i =0; i<s.length(); i++) res[s.length()-1-i] = (char)(s.charAt(i)-48);
+            return res;
+        }
+
+        /**
+         * Perform accum = accum+val
+         * accum: an array of digits
+         * val: an array of digits MUST BE exaclty 2 values
+         * offset: how many places to shift val
+          */
+        void sum(char[] accum, int c, int offset) {
+            // Basically doing pen+paper addition one digit at a time until there are
+            // no more carry overs.
+
+            int a=0,r=0;
+            do {
+                a = accum[offset];
+                r = (a+c)%10;
+                c = (a+c)/10;
+                accum[offset++] = (char)r;
+
+            } while (c != 0);
+        }
     /**
-     * Perform accum = accum+val
-     * accum: an array of digits
-     * val: an array of digits MUST BE exaclty 2 values
-     * offset: how many places to shift val
-      */
-    void sum(char[] accum, int add, int offset) {
-
-        //TODO - get rid of this array
-        char[] val = new char[] {
-                (char)((add)%10),
-                (char)((add)/10)
-        };
-        int validx = 0;
-        int accumidx = offset;
-        int v=0,a=0,r=0,c=0;
-
-        // Basically doing pen+paper addition one digit at a time until there are
-        // no more carry overs.
-        do {
-            v = (validx <=1) ? val[validx++] : 0;
-            a = accum[accumidx];
-            r = (v+a+c)%10;
-            c = (v+a+c)/10;
-            accum[accumidx++] = (char)r;
-
-        } while (validx < 2 || c != 0);
-    }
-
     // Helper method for converting a char array to a string
     String pca(char[] arr) {
         String s = "";
         for (int i = 0; i< arr.length; i++) s+=""+(int)arr[i];
         return s;
     }
+    */
 }
 
 //leetcode submit region end(Prohibit modification and deletion)
