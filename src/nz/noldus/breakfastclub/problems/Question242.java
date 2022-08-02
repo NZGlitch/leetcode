@@ -31,7 +31,6 @@ class Question242 {
 class Solution {
     public boolean isAnagram(String s, String t) {
         int[] ht = new int[255];
-        int zeros = 0;
         for (int i=0; i< s.length(); i++) ht[s.charAt(i)]++;
         for (int i=0; i< t.length(); i++) ht[t.charAt(i)]--;
         for (int i=0; i<255; i++) if (ht[i] != 0) return false;
