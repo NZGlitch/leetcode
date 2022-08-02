@@ -31,24 +31,23 @@ class Solution {
     }
 
     public void findSolutions(int pairsToFind, int pairCount, int openCount, int curIdx, char[] curString, List<String> solutions) {
-        //is the current string a solution?
+        // Is the current string a solution?
         if (pairsToFind == pairCount && openCount == 0) {
             solutions.add(new String(curString));
             return;
         }
 
-        //if there is space for another open brace
+        // If there is space for another open brace
         if (pairCount + openCount < pairsToFind) {
             curString[curIdx] = '(';
             findSolutions(pairsToFind, pairCount, openCount+1, curIdx + 1, curString, solutions);
         }
 
-        //If we can add a close brace
+        // Can add a close brace?
         if (pairCount < pairsToFind && openCount > 0) {
             curString[curIdx] = ')';
             findSolutions(pairsToFind, pairCount+1, openCount-1, curIdx +1, curString, solutions);
         }
-
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
