@@ -23,79 +23,32 @@ import java.util.ArrayList;
 class Question22 {
     //leetcode submit region begin(Prohibit modification and deletion)
 class Solution {
-    class Node {
-        final char sym;
-        final int open;
-        final int pairs;
-        Node nextOpen;
-        Node nextClosed;
 
-        public Node() {
-            this.sym = '\0';
-            this.open = 0;
-            this.pairs = 0;
-        }
-        public Node(char sym, Node prev) {
-            this.sym = sym;
-            if (sym == '(') {
-                this.open = prev.open + 1;
-                this.pairs = prev.pairs;
-
-            }
-            else {
-                this.open = prev.open -1;
-                this.pairs = prev.pairs + 1;
-            }
-        }
-
-        public boolean valid(int n) {
-            if (this.sym == '\0') return true;
-            if (this.open < 0) return false;
-            if (this.sym == '(') return this.pairs < n;
-            return this.pairs <= n;
-        }
-
-        public void genNodes(int o, int c, int n) {
-            //System.out.println("genNodes("+o+","+c+","+n+")");
-            if (o > 0) {
-                Node open = new Node('(', this);
-                if (open.valid(n)) {
-                    //System.out.println("\tAdd valid open");
-                    this.nextOpen = open;
-                    this.nextOpen.genNodes(o - 1, c, n);
-                }
-            }
-            if (c > 0) {
-                Node closed = new Node(')', this);
-                if (closed.valid(n)) {
-                    //System.out.println("\tAdd valid close");
-                    nextClosed = closed;
-                    nextClosed.genNodes(o, c-1, n);
-                }
-            }
-        }
-
-        public List<String> genStrings() {
-            List<String> merged = new ArrayList<>();
-            if (nextOpen != null) {
-                if (this.sym == '\0') merged.addAll(nextOpen.genStrings());
-                else for (String o : nextOpen.genStrings()) merged.add(this.sym + o);
-            }
-
-            if (nextClosed != null) {
-                if (this.sym == '\0') merged.addAll(nextClosed.genStrings());
-                else for (String c : nextClosed.genStrings()) merged.add(this.sym + c);
-            }
-
-            if (nextOpen == null && nextClosed == null && this.sym != '\0') merged.add(""+this.sym);
-
-            return merged;
-        }
+    public List<String> generateParenthesis(int pairsToFind) {
+        List<String> validSolutions = new ArrayList<>();
+        findSolutions(pairsToFind, 0, 0, 0, new char[pairsToFind*2], validSolutions);
+        return validSolutions;
     }
-    public List<String> generateParenthesis(int n) {
-        Node root = new Node();
-        root.genNodes(n,n,n);
-        return root.genStrings();
+
+    public void findSolutions(int pairsToFind, int pairCount, int openCount, int curIdx, char[] curString, List<String> solutions) {
+        //is the current string a solution?
+        if (pairsToFind == pairCount && openCount == 0) {
+            solutions.add(new String(curString));
+            return;
+        }
+
+        //if there is space for another open brace
+        if (pairCount + openCount < pairsToFind) {
+            curString[curIdx] = '(';
+            findSolutions(pairsToFind, pairCount, openCount+1, curIdx + 1, curString, solutions);
+        }
+
+        //If we can add a close brace
+        if (pairCount < pairsToFind && openCount > 0) {
+            curString[curIdx] = ')';
+            findSolutions(pairsToFind, pairCount+1, openCount-1, curIdx +1, curString, solutions);
+        }
+
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
