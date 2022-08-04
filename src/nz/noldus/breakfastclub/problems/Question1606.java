@@ -86,90 +86,38 @@ class Solution {
         // 1) the timestamp each server will be available
         // 2) the number of requests each server has handled
 
-        // My initial inclination is to use objects to represent servers,
-        // and to connect them in a circular linked list
+        //Second approach - keep track of data using arrays
+        List<Integer> result = new ArrayList<>();
+        int[] jobCounts = new int[k];
+        int[] availTimes = new int[k];
+        int max = -1;
 
-        class ServerNode {
-            int id;             // This servers 'number'
-            int avail = 1;      // The next timestamp this server can accept work
-            ServerNode next;    // The next server in the list
-            int numJobs = 0;    // The number of jobs this server has done
-            int numServers = 0; // the number of servers in this list
-
-            // Constructor recursivley creates the linked list
-            // If root is null, then this is the initial call, and root should
-            // be 'this'.
-            // when id == numServer -1, this is the last node, set it's next to
-            // root.
-            public ServerNode(int id, ServerNode root, int numServers) {
-                this.id = id;
-                this.numServers = numServers;
-                if (root == null) root = this;
-                if (id == numServers -1) next = root;
-                else next = new ServerNode(id+1, root, numServers);
-            }
-
-            public void process(int index, int time, int load, boolean started) {
-                if (DEBUG) System.out.println("\tID:"+this.id+" Process("+index+","+time+","+load+","+started+")");
-                if (!started && id != index % numServers) {
-                    //We havent got to the initial server assignment yet
-                    next.process(index, time, load, started);
-                    return;
-                } else if (!started && id == index % numServers ){
-                    // This is the first server to try and assign the job to
-                    started = true;
-                } else if (started && id == index % numServers) {
-                    // We couldnt find a server to handle this job
-                    if (DEBUG) System.out.println("No available servers");
-                    return;
-                }
-
-                // see if this server can start the job
-                if (avail <= time) {
-                    if (DEBUG) System.out.println("\t\t\tJob assigend to "+this.id);
-                    //We can do it!
-                    avail = time + load;
-                    numJobs++;
-                } else {
-                    if (DEBUG) System.out.println("\t\t\tServer "+this.id+" unavailable");
-                    //pass to the next server
-                    next.process(index, time, load, started);
-                }
-            }
-
-            public List<Integer> busiest() {
-                ArrayList<Integer> result = new ArrayList<>();
-                // find the max busyness
-                int max = next.findMax(numJobs, this);
-                if (DEBUG) System.out.println("Max is "+max);
-                //add this server to the list if it is max
-                if (numJobs == max) result.add(this.id);
-                //Add all server id's to the list that have this max
-                next.findAllBusy(max, this, result);
-                return result;
-            }
-
-            private void findAllBusy(int max, ServerNode root, ArrayList<Integer> result) {
-                if (this == root) return; //done
-                if (this.numJobs == max) result.add(this.id);
-                next.findAllBusy(max, root, result);
-            }
-
-            private int findMax(int curMax, ServerNode root) {
-                if (this == root) return curMax;
-                else return next.findMax(Math.max(curMax, numJobs), root);
-            }
-        }
-
-        ServerNode root = new ServerNode(0,null, k);
-
-        // For each arrival
-        for(int i = 0; i< arrival.length; i++) {
+        for (int i=0; i<arrival.length; i++) {
+            //iterate through each server starting at i % k, to see if any can
+            //take the job
             if (DEBUG) System.out.println("Job "+i);
-            root.process(i, arrival[i], load[i], false);
+            for (int j=0; j<k; j++) {
+                int index = (i+j)%k;
+                if (DEBUG) System.out.println("\tChecking server "+index);
+                if (arrival[i] >= availTimes[index]) {
+                    if (DEBUG) System.out.println("\t\tAssigning to server "+index);
+                    jobCounts[index]++;
+                    availTimes[index] = arrival[i] + load[i];
+                    max = Math.max(jobCounts[index],max);
+                    break;
+                }
+            }
+         }
+
+        //find all servers that handled max jobs
+        if (DEBUG) System.out.println("Checking busiest. Max is "+max);
+        for (int i=0; i<k; i++) {
+            if (DEBUG) System.out.println(i);
+            if (jobCounts[i] == max) result.add(i);
         }
 
-        return root.busiest();
+        return result;
+
 
     }
 }
