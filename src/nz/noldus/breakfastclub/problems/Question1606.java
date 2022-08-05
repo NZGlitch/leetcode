@@ -75,50 +75,97 @@
 
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
 class Question1606 {
     //leetcode submit region begin(Prohibit modification and deletion)
 class Solution {
 
     static final boolean DEBUG = false;
-    public List<Integer> busiestServers(int k, int[] arrival, int[] load) {
-        // we need to track 2 things:
-        // 1) the timestamp each server will be available
-        // 2) the number of requests each server has handled
 
-        //Second approach - keep track of data using arrays
-        List<Integer> result = new ArrayList<>();
-        int[] jobCounts = new int[k];
-        int[] availTimes = new int[k];
-        int max = -1;
+    //Data structure for tracking server availability
+    class Server implements Comparable<Server> {
+        final int id;
+        int nextAvail = 0;
+        int jobs = 0;
+        public Server(int id) { this.id = id; }
+
+        public int compareTo(Server b) {
+            int availDif = this.nextAvail - b.nextAvail;
+            if (availDif != 0) return availDif;
+            return this.id - b.id;
+        }
+
+        public boolean equals(Object o) {
+            if (! (o instanceof Server)) return false;
+            return this.id == ((Server)o).id;
+        }
+
+    }
+    public List<Integer> busiestServers(int k, int[] arrival, int[] load) {
+        SortedSet<Server> servers = new TreeSet();
+
+        for (int i=0; i<k; i++) servers.add(new Server(i));
+
+        int max = -1; //keep track of the server that has done the most jobs;
 
         for (int i=0; i<arrival.length; i++) {
-            //iterate through each server starting at i % k, to see if any can
-            //take the job
-            if (DEBUG) System.out.println("Job "+i);
-            for (int j=0; j<k; j++) {
-                int index = (i+j)%k;
-                if (DEBUG) System.out.println("\tChecking server "+index);
-                if (arrival[i] >= availTimes[index]) {
-                    if (DEBUG) System.out.println("\t\tAssigning to server "+index);
-                    jobCounts[index]++;
-                    availTimes[index] = arrival[i] + load[i];
-                    max = Math.max(jobCounts[index],max);
+            int t = arrival[i];
+            int l = load[i];
+
+            if (DEBUG) System.out.println("Checking Job "+i+" t:"+t+" l:"+l);
+            if(DEBUG)printQueue(servers);
+            Server bestServer = null;
+            int bestN = k;
+            //iterate through queue looking for available servers
+            //We need to make this more efficient!
+            for(Server s : servers) {
+                if (DEBUG) System.out.println("--Testing server "+s.id);
+                if (s.nextAvail <= t) {
+                    int n = s.id < (i%k) ? s.id+k : s.id;
+                    if (DEBUG) System.out.println("----Available, n: "+n);
+                    if (bestServer == null || n < bestN) {
+                        if (DEBUG) System.out.println("----Best so far");
+                        bestN = n;
+                        bestServer = s;
+                        //if n is 0, we cant do any better
+                        if (bestN == 0) break;
+                    }
+                } else {
+                    //No more to check
                     break;
                 }
             }
-         }
-
-        //find all servers that handled max jobs
-        if (DEBUG) System.out.println("Checking busiest. Max is "+max);
-        for (int i=0; i<k; i++) {
-            if (DEBUG) System.out.println(i);
-            if (jobCounts[i] == max) result.add(i);
+            //Update the servers details
+            //Increment job count, set next avail time, update max if needed
+            if (bestServer != null) {
+                if (DEBUG) System.out.println("--Best server is "+bestServer.id);
+                servers.remove(bestServer);
+                bestServer.jobs++;
+                max = Math.max(max, bestServer.jobs);
+                bestServer.nextAvail = t+l;
+                servers.add(bestServer);
+                if (DEBUG) System.out.println("--Max is now "+max);
+            } else {
+                if (DEBUG) System.out.println("--No server found.");
+            }
+            if (DEBUG) System.out.println("\n\n");
         }
 
+        //Iterate through all servers and add those with 'max' jobs to result list
+        List<Integer> result = new ArrayList<>();
+        for (Server s : servers) if (s.jobs == max) result.add(s.id);
         return result;
 
+    }
 
+    public void printQueue(SortedSet<Server> q) {
+        String str = "";
+        for (Server s : q) {
+            str+="("+s.id+","+s.nextAvail+","+s.jobs+")";
+        }
+        System.out.println(str);
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
