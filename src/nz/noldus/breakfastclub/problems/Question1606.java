@@ -74,99 +74,73 @@
 // Related Topics Array Greedy Heap (Priority Queue) Ordered Set 👍 374 👎 18
 
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.PriorityQueue;
+import java.util.*;
 
 class Question1606 {
     //leetcode submit region begin(Prohibit modification and deletion)
+import java.util.*;
 class Solution {
 
     static final boolean DEBUG = false;
 
-    //Data structure for tracking server availability
-    class Server implements Comparable<Server> {
-        final int id;
-        int nextAvail = 0;
-        int jobs = 0;
-        public Server(int id) { this.id = id; }
-
-        public int compareTo(Server b) {
-            int availDif = this.nextAvail - b.nextAvail;
-            if (availDif != 0) return availDif;
-            return this.id - b.id;
-        }
-
-        public boolean equals(Object o) {
-            if (! (o instanceof Server)) return false;
-            return this.id == ((Server)o).id;
-        }
-
-    }
     public List<Integer> busiestServers(int k, int[] arrival, int[] load) {
-        SortedSet<Server> servers = new TreeSet();
-
-        for (int i=0; i<k; i++) servers.add(new Server(i));
-
-        int max = -1; //keep track of the server that has done the most jobs;
-
-        for (int i=0; i<arrival.length; i++) {
-            int t = arrival[i];
-            int l = load[i];
-
-            if (DEBUG) System.out.println("Checking Job "+i+" t:"+t+" l:"+l);
-            if(DEBUG)printQueue(servers);
-            Server bestServer = null;
-            int bestN = k;
-            //iterate through queue looking for available servers
-            //We need to make this more efficient!
-            for(Server s : servers) {
-                if (DEBUG) System.out.println("--Testing server "+s.id);
-                if (s.nextAvail <= t) {
-                    int n = s.id < (i%k) ? s.id+k : s.id;
-                    if (DEBUG) System.out.println("----Available, n: "+n);
-                    if (bestServer == null || n < bestN) {
-                        if (DEBUG) System.out.println("----Best so far");
-                        bestN = n;
-                        bestServer = s;
-                        //if n is 0, we cant do any better
-                        if (bestN == 0) break;
-                    }
-                } else {
-                    //No more to check
-                    break;
-                }
-            }
-            //Update the servers details
-            //Increment job count, set next avail time, update max if needed
-            if (bestServer != null) {
-                if (DEBUG) System.out.println("--Best server is "+bestServer.id);
-                servers.remove(bestServer);
-                bestServer.jobs++;
-                max = Math.max(max, bestServer.jobs);
-                bestServer.nextAvail = t+l;
-                servers.add(bestServer);
-                if (DEBUG) System.out.println("--Max is now "+max);
-            } else {
-                if (DEBUG) System.out.println("--No server found.");
-            }
-            if (DEBUG) System.out.println("\n\n");
+        //Server object
+        class Server {
+            int id;
+            int at;
+            int jobs;
         }
 
-        //Iterate through all servers and add those with 'max' jobs to result list
-        List<Integer> result = new ArrayList<>();
-        for (Server s : servers) if (s.jobs == max) result.add(s.id);
-        return result;
+        // Sorted Linked list data strucutre, has special functions to align head pointer
+        // with current i from main algorithm
+        class ServerList extends LinkedList<Server> {
+
+            //We will insert it to retain correct order
+            public orderedInsert(Server s, int i) {
+                //simple case - list is empty
+                if (this.isEmpty()) { this.add(s); }
+
+                /**
+                 * cases
+                 * x                head =
+                 *
+                 * xxxx|xxxx        head > tail
+                 *  xxixx|xxxx          i > head
+                 *  ixxxx|xxxx          i = head
+                 *  xxxx|xxixx          i < head
+                 *
+                 * xxxxxxxx |      head < tail || head = tail
+                 *  |ixxxxxx       while next !=null && i < next then >>1
+                 */
+
+
+//                if (this.peek().id > this.peekLast().id) { // first case
+//                    int index = 0;
+//                    if (i > this.peek().id) while (i<this.peek().id)
+//                }
+            }
+        }
+        //We create a Linked List of servers ordered by id;
+        //we create a priority queue for 'busy' servers orderd by next available time
+
+        //for each i 0....k
+            //while (busy.peek().at < arrival[i])
+            //      need to reinsert this in the correct place in the list (non-trivial)
+            //
+            //         list.orderedInsert(busy.poll())
+            //
+            //  after that it is possible list.head < i and there exists a server > i
+            //  if (list.max > i && list.head < i) while (list.head < i) { list.rotate }
+            //
+            //if (list.isEmpty()) continue //no servers to give the job to
+            //server = list.remove()                //the current head is the best server
+            //server.at = arrival[i] + load[i]      //set it's avaialable time
+            //server.jobs++;                        //inc its job count
+            // m = max(m, server.jobs)              //check if max has changed
+            // busy.push(server)                    //put server into busy queue
 
     }
 
-    public void printQueue(SortedSet<Server> q) {
-        String str = "";
-        for (Server s : q) {
-            str+="("+s.id+","+s.nextAvail+","+s.jobs+")";
-        }
-        System.out.println(str);
-    }
 }
 //leetcode submit region end(Prohibit modification and deletion)
 
