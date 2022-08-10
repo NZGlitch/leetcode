@@ -81,109 +81,51 @@ class Question1606 {
 import java.util.*;
 class Solution {
 
-    static final boolean DEBUG = false;
-
-    public void printQueues(LinkedList<Server> a, PriorityQueue<Server> b) {
-        String aString = "--[";
-        for(Server s : a) aString = aString+s.id+",";
-        aString = aString+"]";
-
-        String bString = "--[";
-        for(Server s : b) bString = bString+s.id+",";
-        bString = bString+"]";
-        System.out.println(aString+"\n"+bString);
-    }
-
-    //Server object
-    class Server implements Comparable<Server> {
-        final int id;
-        int at = -1;
-        int jobs = 0;
-
-        public Server(int id) { this.id = id; }
-
-        public int compareTo(Server o) {
-            return this.at - o.at;
-        }
-    }
-
     public List<Integer> busiestServers(int k, int[] arrival, int[] load) {
+        // Set of available server id's orderd by id
+        TreeSet<int[]> ready = new TreeSet<>((a,b) -> a[0] - b[0]);
 
+        //Set of busy servers ordered by available time
+        PriorityQueue<int[]> busy = new PriorityQueue<>((a,b) -> a[1] - b[1]);
 
-        // Sorted Linked list data strucutre, has special insert to align head pointer
-        // with current i from main algorithm
-        class ServerList extends LinkedList<Server> {
+        // Current highest number of jobs processed;
+        int max = 0;
 
-            //We will insert it to retain correct order - i is then next request id, the front of the queue
-            //should satisfy the condition of being the lowest server id equal to or greater than i%k
-            public void orderedInsert(Server s, int i) {
-                if (DEBUG) System.out.println("----orderedInsert("+i+")");
-                //simple case - list is empty
-                if (this.isEmpty()) { this.add(s); return; }
-                //More coimplicated case
-                int pos = s.id - (i%k);
-                if (pos < 0) pos+=k;
-                if (DEBUG) System.out.println("----pos: "+pos);
-                boolean inserted = false;
-                for (int j = 0; j<this.size(); j++) {
-                    int compPos = this.get(j).id-(i%k);
-                    if (compPos < 0) compPos+=k;
-                    if (DEBUG) System.out.println("----check idx "+j+" with pos "+compPos);
-                    if (compPos > pos) {
-                        if (DEBUG) System.out.println("----idx Found: "+j);
-                        this.add(j, s);
-                        return;
-                    }
-                }
+        // Create servers. A server is a 3 element array:
+        // s[0] is the servers id, s[1] is the next available time, s[2] is the servers job count,
+        // of jobs that server has processed
+        for (int i=0; i<k; i++) ready.add(new int[] {i, 0, 0});
 
-                System.out.println("----No ID Found adding tot he end");
+        // Process jobs one by one:
+        for (int j = 0; j < arrival.length; j++) {
 
-                // No target to insert before - add to end.
-                this.offerLast(s);
+            // Transfer busy servers off the heap to the available list if thier avail time
+            // less than or equal to current time
+            while (!busy.isEmpty() && busy.peek()[1] <= arrival[j]) ready.add(busy.poll());
+
+            //Get the next available server
+            if (ready.isEmpty()) continue;
+            else {
+                int[] s = ready.ceiling(new int[] {j%k,0,0});
+                if (s == null) s = ready.first();
+                ready.remove(s);
+
+                //increment its job count, set its available time and add to busy list
+                s[1] = arrival[j] + load[j];
+                s[2]++;
+                busy.offer(s);
+
+                // Check if max has changed
+                max = Math.max(max, s[2]);
             }
         }
-        //We create a Linked List of servers ordered by id;
-        final ServerList available = new ServerList();
-        for (int i=0; i<k; i++) {
-            available.offerLast(new Server(i));
-        }
-        //we create a priority queue for 'busy' servers orderd by next available time
-        final PriorityQueue<Server> busy = new PriorityQueue<>();
 
-        // The current number of jobs the busienst server has processed
-        int maxJobs = 0;
+        // Return list of all servers that have done maxJob jobs
+        List<Integer> res = new ArrayList<>();
+        for (int[] server : busy) if(server[2] == max) res.add(server[0]);
+        for (int[] server : ready) if(server[2] == max) res.add(server[0]);
 
-        for (int i=0; i<arrival.length; i++) {
-            if (DEBUG) System.out.println("Start Job "+i+" arrival "+arrival[i]);
-            if (DEBUG) printQueues(available, busy);
-
-            // need to reinsert this in the correct place in the list
-            if (DEBUG) System.out.println("\n\n--Move busy to available");
-            while (!busy.isEmpty() && busy.peek().at <= arrival[i]) available.orderedInsert(busy.poll(), i);
-            if (DEBUG) printQueues(available, busy);
-
-            // In theory the current front of the q is the best server
-            // If the list is not empty we assign the job
-            if (available.size() > 0) {
-
-                Server next = available.poll();                // Take the server from the available list
-                next.at = arrival[i] + load[i];             // Update it's available time
-                next.jobs++;                              // Increment it's job count
-                maxJobs = Math.max(maxJobs, next.jobs);   // Update maxJobs if needed
-                busy.offer(next);
-                if (DEBUG) System.out.println("--Assigning job to "+next.id+" at: "+next.at);
-            } else {
-                if (DEBUG) System.out.println("--No servers available, skipping");
-            }
-            if(DEBUG) System.out.println("--Job processed max="+maxJobs);
-            if(DEBUG) printQueues(available, busy);
-        }
-        List<Integer> busiest = new ArrayList<>();
-        final int max = maxJobs;
-        //iterate through both queues and add any servers to the list that have jobs == maxJobs
-        for(Server s : busy) if(s.jobs == max) busiest.add(s.id);
-        for(Server s : available) if(s.jobs == max) busiest.add(s.id);
-        return busiest;
+        return res;
     }
 
 }
