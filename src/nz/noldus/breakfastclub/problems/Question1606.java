@@ -83,62 +83,107 @@ class Solution {
 
     static final boolean DEBUG = false;
 
-    public List<Integer> busiestServers(int k, int[] arrival, int[] load) {
-        //Server object
-        class Server {
-            int id;
-            int at;
-            int jobs;
-        }
+    public void printQueues(LinkedList<Server> a, PriorityQueue<Server> b) {
+        String aString = "--[";
+        for(Server s : a) aString = aString+s.id+",";
+        aString = aString+"]";
 
-        // Sorted Linked list data strucutre, has special functions to align head pointer
+        String bString = "--[";
+        for(Server s : b) bString = bString+s.id+",";
+        bString = bString+"]";
+        System.out.println(aString+"\n"+bString);
+    }
+
+    //Server object
+    class Server implements Comparable<Server> {
+        final int id;
+        int at = -1;
+        int jobs = 0;
+
+        public Server(int id) { this.id = id; }
+
+        public int compareTo(Server o) {
+            return this.at - o.at;
+        }
+    }
+
+    public List<Integer> busiestServers(int k, int[] arrival, int[] load) {
+
+
+        // Sorted Linked list data strucutre, has special insert to align head pointer
         // with current i from main algorithm
         class ServerList extends LinkedList<Server> {
 
-            //We will insert it to retain correct order
-            public orderedInsert(Server s, int i) {
+            //We will insert it to retain correct order - i is then next request id, the front of the queue
+            //should satisfy the condition of being the lowest server id equal to or greater than i%k
+            public void orderedInsert(Server s, int i) {
+                if (DEBUG) System.out.println("----orderedInsert("+i+")");
                 //simple case - list is empty
-                if (this.isEmpty()) { this.add(s); }
+                if (this.isEmpty()) { this.add(s); return; }
+                //More coimplicated case
+                int pos = s.id - (i%k);
+                if (pos < 0) pos+=k;
+                if (DEBUG) System.out.println("----pos: "+pos);
+                boolean inserted = false;
+                for (int j = 0; j<this.size(); j++) {
+                    int compPos = this.get(j).id-(i%k);
+                    if (compPos < 0) compPos+=k;
+                    if (DEBUG) System.out.println("----check idx "+j+" with pos "+compPos);
+                    if (compPos > pos) {
+                        if (DEBUG) System.out.println("----idx Found: "+j);
+                        this.add(j, s);
+                        return;
+                    }
+                }
 
-                /**
-                 * cases
-                 * x                head =
-                 *
-                 * xxxx|xxxx        head > tail
-                 *  xxixx|xxxx          i > head
-                 *  ixxxx|xxxx          i = head
-                 *  xxxx|xxixx          i < head
-                 *
-                 * xxxxxxxx |      head < tail || head = tail
-                 *  |ixxxxxx       while next !=null && i < next then >>1
-                 */
+                System.out.println("----No ID Found adding tot he end");
 
-
-//                if (this.peek().id > this.peekLast().id) { // first case
-//                    int index = 0;
-//                    if (i > this.peek().id) while (i<this.peek().id)
-//                }
+                // No target to insert before - add to end.
+                this.offerLast(s);
             }
         }
         //We create a Linked List of servers ordered by id;
+        final ServerList available = new ServerList();
+        for (int i=0; i<k; i++) {
+            available.offerLast(new Server(i));
+        }
         //we create a priority queue for 'busy' servers orderd by next available time
+        final PriorityQueue<Server> busy = new PriorityQueue<>();
 
-        //for each i 0....k
-            //while (busy.peek().at < arrival[i])
-            //      need to reinsert this in the correct place in the list (non-trivial)
-            //
-            //         list.orderedInsert(busy.poll())
-            //
-            //  after that it is possible list.head < i and there exists a server > i
-            //  if (list.max > i && list.head < i) while (list.head < i) { list.rotate }
-            //
-            //if (list.isEmpty()) continue //no servers to give the job to
-            //server = list.remove()                //the current head is the best server
-            //server.at = arrival[i] + load[i]      //set it's avaialable time
-            //server.jobs++;                        //inc its job count
-            // m = max(m, server.jobs)              //check if max has changed
-            // busy.push(server)                    //put server into busy queue
+        // The current number of jobs the busienst server has processed
+        int maxJobs = 0;
 
+        for (int i=0; i<arrival.length; i++) {
+            if (DEBUG) System.out.println("Start Job "+i+" arrival "+arrival[i]);
+            if (DEBUG) printQueues(available, busy);
+
+            // need to reinsert this in the correct place in the list
+            if (DEBUG) System.out.println("\n\n--Move busy to available");
+            while (!busy.isEmpty() && busy.peek().at <= arrival[i]) available.orderedInsert(busy.poll(), i);
+            if (DEBUG) printQueues(available, busy);
+
+            // In theory the current front of the q is the best server
+            // If the list is not empty we assign the job
+            if (available.size() > 0) {
+
+                Server next = available.poll();                // Take the server from the available list
+                next.at = arrival[i] + load[i];             // Update it's available time
+                next.jobs++;                              // Increment it's job count
+                maxJobs = Math.max(maxJobs, next.jobs);   // Update maxJobs if needed
+                busy.offer(next);
+                if (DEBUG) System.out.println("--Assigning job to "+next.id+" at: "+next.at);
+            } else {
+                if (DEBUG) System.out.println("--No servers available, skipping");
+            }
+            if(DEBUG) System.out.println("--Job processed max="+maxJobs);
+            if(DEBUG) printQueues(available, busy);
+        }
+        List<Integer> busiest = new ArrayList<>();
+        final int max = maxJobs;
+        //iterate through both queues and add any servers to the list that have jobs == maxJobs
+        for(Server s : busy) if(s.jobs == max) busiest.add(s.id);
+        for(Server s : available) if(s.jobs == max) busiest.add(s.id);
+        return busiest;
     }
 
 }
