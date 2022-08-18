@@ -37,32 +37,29 @@ class Question14 {
     //leetcode submit region begin(Prohibit modification and deletion)
 class Solution {
     public String longestCommonPrefix(String[] strs) {
-        // Lets sort by length first - as we only need to look
-        // at the shortest string first
-        Arrays.sort(strs, new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                return o1.length()-o2.length();
-            }
-        });
+        // Find the shortest string first, that will be our base
+        String shortest = strs[0];
+        for (int i=0; i<strs.length; i++)
+            if (strs[i].length() < shortest.length()) shortest = strs[i];
 
-        // The best possible result is the shortest string
-        char[] best = strs[0].toCharArray();
-        int len = best.length;
+        // The best possible result can not be longer than the shortest
+        // String
+        char[] best = shortest.toCharArray();
+        int bestLen = best.length;
 
         //Iterate through the remainin strings
-        for (int i=1; i<strs.length; i++) {
+        for (int i=0; i<strs.length; i++) {
             // Compare our current best with this string
-            for (int j = 0; j < len; j++) {
+            for (int j = 0; j < bestLen; j++) {
                 if (best[j] != strs[i].charAt(j)) {
                     //Not a match
-                    len = j;
+                    bestLen = j;
                     break;
                 }
             }
         }
         // Use the len chars from best[] to construct the answer
-        return new String(best, 0, len);
+        return new String(best, 0, bestLen);
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
