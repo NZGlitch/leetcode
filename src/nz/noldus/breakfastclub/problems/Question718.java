@@ -37,92 +37,129 @@ import java.math.BigInteger;
 
     class Solution {
 
+    public class Hash {
+        final int a;
+        BigInteger hash;
+        int window;
+        int ptr;
+
+        public Hash(int a, long hash, int window, int ptr) {
+            this.a = a; this.hash = BigInteger.ZERO; this.window = window; this.ptr = ptr;
+        }
+
+        // Special helper method for doing a regular op with bigints
+        public void mulpow(int val) {
+            hash = hash.add(BigInteger.valueOf(val).multiply(BigInteger.valueOf(a).pow(window-1)));
+        }
+
+        //subtract a value from the current hash
+        public void subtract(int val) {
+            hash = hash.subtract(BigInteger.valueOf(val));
+        }
+
+        //divide the hash by a value
+        public void divide(int val) {
+            hash = hash.divide(BigInteger.valueOf(val));
+        }
+
+        public String toString() {
+            return "a: "+a+" h:"+hash+" w:"+window+" p:"+ptr;
+        }
+    }
 
     public int findLength(int[] nums1, int[] nums2) {
-        Set<Integer> lookup = new HashSet();
+        /**
+         * Simple implementation:
+         * Let us assume that (a) = 10, and long is sufficient for hashing
+         */
+
+        // Make sure nums2 is the shorter array
+        if (nums2.length > nums1.length) {
+            int[] t = nums1;
+            nums1 = nums2;
+            nums2 = t;
+        }
+
+        //Create a constant time lookup table for nums2 for short-circuiting
+        Set<Integer> lookup = new HashSet();     //TODo is this the best struct?
         for (int i : nums2) lookup.add(i);
-        int window = 1;
-        int ptr = 0;
-        BigInteger hash = BigInteger.ZERO;
-        int hashsize = 0;
-        int best = 0;
 
-        //While our n1 pointer is within range
-        while(true) {
-            //If our hashsize is less than our window size, 'grow' our hash by one
-            //System.out.println("w:"+window+" p:"+ptr+" hs:"+hashsize+" b:"+best+" h"+hash);
-            if (hashsize < window && ptr < nums1.length) {
-               // System.out.println("    grow");
-                hash = hash.add(mulpow(nums1[ptr++], 100, hashsize++));
-                continue; //restart loop
-            } else if (hashsize < window) {
-                //We cant grow our window, so we are done
-                //System.out.println("     No space");
-                return best;
-            }
+        // Struct for holding useful values
+        Hash hash = new Hash(100,0,0,0);
+        int best = 0;   // best result so far
 
-            //search second array for matching hash. If found increase window size
-            if (search(nums2, window, hash)) {
-                //System.out.println("    search");
-                best = window;
-                window++;       //this will automatically cause ptr to be increased
-            } else if (ptr < nums1.length-1) {
-                //System.out.print("    slide");
-                //Not found, move our window
-                // Two cases -
-                    // the next value is in the taget arrey, window >> 1
-                    // the next value is Not in thetarget array ptr>>next found value, new window
-                if (lookup.contains(nums1[ptr])) {
-                    //System.out.println(" single");
-                    //1 subtract leading number
-                    hash = hash.subtract(BigInteger.valueOf(nums1[ptr - window]).multiply(BigInteger.ONE));
-                    //2 divide by exp
-                    hash = hash.divide(BigInteger.valueOf(100));
-                    //3 Add next number
-                    hash = hash.add(mulpow(nums1[ptr++], 100, window - 1));
-
-                } else {
-                    //System.out.println(" multi");
-                    // Move the pointer to the next number that appears in the target set as well
-                    while((ptr+window) < nums1.length && !lookup.contains(nums1[ptr])) ptr++;
-                    //reset hashsize
-                    hashsize = 0;
-                    hash = BigInteger.ZERO;
-                    ptr--;
-                }
+        //While we have a valid window to look at in nums1
+        while (hash.ptr + hash.window <= nums1.length) {
+            //System.out.println("Current: "+hash.toString());
+            //Search for the current hash
+            if (search(nums2, hash)) {
+                best = hash.window;             //Save our best match so far
+                if (!grow(nums1, hash)) break;  //if there is a match increase window, if we cant grow - done!
             } else {
-                //System.out.println("    done");
-                //We are at the end, our best answer is window size less 1
-                return best;
+                if(!slide(nums1, hash)) break;  //Otherwise move pointer to right - if we cant - done!
             }
         }
-     }
-     public boolean search(int[] haystack, int window, BigInteger h1) {
-        //System.out.println("SEARCH w:"+window+" h1:"+h1);
-        //create hash of size window
-         BigInteger h2 = BigInteger.ZERO;
-         int ptr=window;
-         for (int i = 0; i<window; i++) {
-             h2 = h2.add(mulpow(haystack[i], 100, i));
-         }
-         //System.out.println("        init h2:"+h2);
-         //iterate through list, sliding window until there is a match
-         while ((!h1.equals(h2)) && (ptr < haystack.length)) {
-             //System.out.println("        slide h2:"+h2);
-             //slide right
-             h2 = h2.subtract(BigInteger.valueOf(haystack[ptr-window]));
-             //System.out.println("        slide a h2:"+h2);
-             h2 = h2.divide(BigInteger.valueOf(100));
-             //System.out.println("        slide b h2:"+h2);
-             h2 = h2.add(mulpow(haystack[ptr++],100,window-1));
-             //System.out.println("        slide c h2:"+h2);
-         }
-         return h1.equals(h2);
-     }
+        return best;
+    }
 
-     public BigInteger mulpow(int v, int base, int pow) {
-        return BigInteger.valueOf(v).multiply(BigInteger.valueOf(base).pow(pow));
-     }
+    /**
+     * Search target array for window of values with givent hash
+     * Note, a window size of 0 always returns true (all sets contain the empty set)
+     */
+    private boolean search(int[] target, Hash hash1) {
+        //if (hash1.window == 4) System.out.println("     search h1:"+hash1.hash);
+        if (hash1.window == 0) return true;
+        // If target size is less than window size, then result is not possible
+        if (target.length < hash1.window) return false;
+
+        // Initialise target hash
+        Hash hash2 = new Hash(hash1.a, 0, 0, 0);
+        while(hash2.window < hash1.window) {
+            //if (hash1.window == 4) System.out.println("h2 grow");
+            grow(target, hash2);
+        }
+
+        //if (hash1.window == 4) System.out.println("h2 init: "+hash2);
+
+        // Slide until match, or end
+        while(!hash2.hash.equals(hash1.hash)) {
+            //if (hash1.window == 4) System.out.println("h2:"+hash2.hash);
+            if (!slide(target, hash2)) break;
+        }
+        return hash2.hash.equals(hash1.hash);
+    }
+
+    /**
+     * Grow window by one, return false if this is not possible
+     */
+    private boolean grow(int[] data, Hash hash) {
+        //System.out.println("     grow");
+        if (hash.ptr + hash.window >= data.length) return false;
+        // Simply add v*a^w to the hash
+        hash.window++;
+        hash.mulpow(data[hash.ptr+hash.window-1]);
+        return true;
+    }
+
+    /**
+     * Slide window right one, return false if this is not possible
+     */
+    private boolean slide(int[] data, Hash hash) {
+        //if (hash.window > 3) System.out.println("     slide. hash: "+hash);
+        if (hash.ptr + hash.window >= data.length) return false;
+        // 1. Sub current first value
+        hash.subtract(data[hash.ptr++]);
+        //if (hash.window > 3) System.out.println("     slide1 hash: "+hash);
+        // 2. divide by a (i.e. shiifting 1 space)
+        hash.divide(hash.a);
+        //if (hash.window > 3) System.out.println("     slide2 hash: "+hash);
+        // 3. add next value (v*a^w)
+        hash.mulpow(data[hash.ptr+hash.window-1]);
+        //if (hash.window > 3) System.out.println("     slide3 hash: "+hash);
+        return true;
+    }
+
+
 }
 //leetcode submit region end(Prohibit modification and deletion)
 
