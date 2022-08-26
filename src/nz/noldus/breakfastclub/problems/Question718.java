@@ -37,58 +37,91 @@ import java.math.BigInteger;
 
     class Solution {
 
+
     public int findLength(int[] nums1, int[] nums2) {
-        // Create a binary search tree for nums 2
-        PriorityQueue<Integer> lookup = new PriorityQueue<>();
-        for(int i : nums2) lookup.add(i);
+        Set<Integer> lookup = new HashSet();
+        for (int i : nums2) lookup.add(i);
+        int window = 1;
+        int ptr = 0;
+        BigInteger hash = BigInteger.ZERO;
+        int hashsize = 0;
+        int best = 0;
 
-        //Need to track indexes for dupes
-        int[] idxs = new int[1000];
+        //While our n1 pointer is within range
+        while(true) {
+            //If our hashsize is less than our window size, 'grow' our hash by one
+            //System.out.println("w:"+window+" p:"+ptr+" hs:"+hashsize+" b:"+best+" h"+hash);
+            if (hashsize < window && ptr < nums1.length) {
+               // System.out.println("    grow");
+                hash = hash.add(mulpow(nums1[ptr++], 100, hashsize++));
+                continue; //restart loop
+            } else if (hashsize < window) {
+                //We cant grow our window, so we are done
+                //System.out.println("     No space");
+                return best;
+            }
 
-        //Initialise some vars
-        int best = 0; //Best sub array found so far
+            //search second array for matching hash. If found increase window size
+            if (search(nums2, window, hash)) {
+                //System.out.println("    search");
+                best = window;
+                window++;       //this will automatically cause ptr to be increased
+            } else if (ptr < nums1.length-1) {
+                //System.out.print("    slide");
+                //Not found, move our window
+                // Two cases -
+                    // the next value is in the taget arrey, window >> 1
+                    // the next value is Not in thetarget array ptr>>next found value, new window
+                if (lookup.contains(nums1[ptr])) {
+                    //System.out.println(" single");
+                    //1 subtract leading number
+                    hash = hash.subtract(BigInteger.valueOf(nums1[ptr - window]).multiply(BigInteger.ONE));
+                    //2 divide by exp
+                    hash = hash.divide(BigInteger.valueOf(100));
+                    //3 Add next number
+                    hash = hash.add(mulpow(nums1[ptr++], 100, window - 1));
 
-        //Iterate through each element in nums, looking for a match
-        //in out binary search tree
-        for (int i = 0; i<nums1.length; i++) {
-            if (lookup.contains(nums1[i])) {
-                //Find the best subarray for this value and remove it
-                best = findBest(nums1,nums2,i,idxs,best);
-                lookup.remove(nums1[i]);
+                } else {
+                    //System.out.println(" multi");
+                    // Move the pointer to the next number that appears in the target set as well
+                    while((ptr+window) < nums1.length && !lookup.contains(nums1[ptr])) ptr++;
+                    //reset hashsize
+                    hashsize = 0;
+                    hash = BigInteger.ZERO;
+                    ptr--;
+                }
+            } else {
+                //System.out.println("    done");
+                //We are at the end, our best answer is window size less 1
+                return best;
             }
         }
-        return best;
-    }
-     public int findBest(int[] nums1, int[] nums2, int idx, int[] idxs, int best) {
-         BigInteger base = BigInteger.valueOf(100); // used for calculations
-         // We have found an element that exists in both arrays, lets find the first index of the
-         // element in the second array
-         int i = idx;                //nums1 index
-         int j = idxs[nums1[i]];    // Start from the index after the last one we started from for this val
-         while(nums2[j] != nums1[i]) j++;
-         // j is now the index of the first instances of nums1[i]
-         idxs[nums1[i]] = j+1; // update index list
-
-         // We now have a pointer to each array - keep a rolling hash until the end
-         BigInteger rollingHashA = BigInteger.ZERO;
-         BigInteger rollingHashB = BigInteger.ZERO;
-         int windowSize = 0;
-         int bestCount = 0;
-         while(i<nums1.length && j < nums2.length) {
-             BigInteger exp = base.pow(windowSize); //exponent for this iteration
-
-             // add the current element to each hash
-             rollingHashA = rollingHashA.add(BigInteger.valueOf(nums1[i]).multiply(exp));
-             rollingHashB = rollingHashB.add(BigInteger.valueOf(nums2[j]).multiply(exp));
-
-             //Update best if match
-             if (rollingHashA.equals(rollingHashB)) bestCount = windowSize+1;
-
-             //increment vars;
-             windowSize++; i++; j++;
+     }
+     public boolean search(int[] haystack, int window, BigInteger h1) {
+        //System.out.println("SEARCH w:"+window+" h1:"+h1);
+        //create hash of size window
+         BigInteger h2 = BigInteger.ZERO;
+         int ptr=window;
+         for (int i = 0; i<window; i++) {
+             h2 = h2.add(mulpow(haystack[i], 100, i));
          }
+         //System.out.println("        init h2:"+h2);
+         //iterate through list, sliding window until there is a match
+         while ((!h1.equals(h2)) && (ptr < haystack.length)) {
+             //System.out.println("        slide h2:"+h2);
+             //slide right
+             h2 = h2.subtract(BigInteger.valueOf(haystack[ptr-window]));
+             //System.out.println("        slide a h2:"+h2);
+             h2 = h2.divide(BigInteger.valueOf(100));
+             //System.out.println("        slide b h2:"+h2);
+             h2 = h2.add(mulpow(haystack[ptr++],100,window-1));
+             //System.out.println("        slide c h2:"+h2);
+         }
+         return h1.equals(h2);
+     }
 
-         return Math.max(best,bestCount);
+     public BigInteger mulpow(int v, int base, int pow) {
+        return BigInteger.valueOf(v).multiply(BigInteger.valueOf(base).pow(pow));
      }
 }
 //leetcode submit region end(Prohibit modification and deletion)
