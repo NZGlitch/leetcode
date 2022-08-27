@@ -94,7 +94,7 @@ import java.math.BigInteger;
             //Search for the current hash
             if (search(nums2, hash)) {
                 best = hash.window;             //Save our best match so far
-                if (!grow(nums1, hash)) break;  //if there is a match increase window, if we cant grow - done!
+                if (!growWithCheck(nums1, hash, lookup)) break;  //if there is a match increase window, if we cant grow - done!
             } else {
                 if(!slide(nums1, hash)) break;  //Otherwise move pointer to right - if we cant - done!
             }
@@ -115,7 +115,6 @@ import java.math.BigInteger;
         // Initialise target hash
         Hash hash2 = new Hash(hash1.a, 0, 0, 0);
         while(hash2.window < hash1.window) {
-            //if (hash1.window == 4) System.out.println("h2 grow");
             grow(target, hash2);
         }
 
@@ -127,6 +126,29 @@ import java.math.BigInteger;
             if (!slide(target, hash2)) break;
         }
         return hash2.hash.equals(hash1.hash);
+    }
+    /** grow with check
+     * same as grow, but if the the next value isnt in the lok up table
+     * move the pointer along and try again until we reach the target window size
+     */
+
+    private boolean growWithCheck(int[] data, Hash hash, Set<Integer> lookup) {
+        int targetWindowSize = hash.window+1;
+        while(hash.window < targetWindowSize) {
+            if (hash.ptr + hash.window >= data.length) return false; // no space to grow
+            //check if next value is in lookup table
+            if (lookup.contains(data[hash.ptr+hash.window])) {
+                //Yes, grow
+                hash.window++;
+                hash.mulpow(data[hash.ptr+hash.window-1]);
+            } else {
+                //No, increment ptr, reset hash and start over
+                hash.ptr = hash.ptr+hash.window;
+                hash.window = 1;
+                hash.hash = BigInteger.valueOf(data[hash.ptr]);
+            }
+        }
+        return true;
     }
 
     /**
