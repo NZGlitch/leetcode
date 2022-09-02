@@ -77,11 +77,10 @@ class Solution {
         int goodNodes = 0;
         while(!stack.isEmpty()) {
             Visit v = stack.pop();
-            if (v.node == null) continue;
             if (v.max <= v.node.val) goodNodes++;
             int newMax = Math.max(v.node.val, v.max);
-            stack.push(new Visit(v.node.left,newMax));
-            stack.push(new Visit(v.node.right,newMax));
+            if (v.node.left != null) stack.push(new Visit(v.node.left,newMax));
+            if (v.node.right != null) stack.push(new Visit(v.node.right,newMax));
         }
         return goodNodes;
 
