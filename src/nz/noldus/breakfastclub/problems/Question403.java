@@ -48,37 +48,27 @@ class Question403 {
     //leetcode submit region begin(Prohibit modification and deletion)
 class Solution {
     public boolean canCross(int[] stones) {
-        /**
-         *          0   1   3   5   6   8   12  17
-         *      0   X   T   X   X   X   X   X   X   (k=0 -> -1,0,1)
-         *      1   X   T   T   X   X   X   X   X   (k=1 [0,1] -> 0,1,2)
-         *      3   X   X   X   T   T   X   X   X   (k=2 [1,3] -> 1,2,3)
-         *      5   X   X   X   X   T   T   X   X   (k=2 [3,5] -> 1,2,3)
-         *      6   X   X   X   X   T   T   X   X   (k=1,3 [3,6][5,1] -> 0,1,2,3,4)
-         *      8   X   X   X   X   X   X   T   X   (k=2,3 [5,8][6,1] -> 1,2,3,4)
-         *      12  X   X   X   X   X   X   X   T   (k=5 [8,12] -> 3,4,5
-         *
-         */
 
-        // If element 1 is not 1, there can not be a path
+        // If element 1 is not 1, there can not be a path [0,x!=1,.....]
         if (stones[1] != 1) return false;
-        // If there re only 2 stones, then there must be a path
+
+        // If there are only 2 stones, then there must be a path [0,1]
         if (stones.length == 2) return true;
 
-        //For performance, we want to keep the stones in a sorrted structure
+        //For performance, we want to keep the stones in a sorted structure
         SortedSet<Integer> stoneSet = new TreeSet<>();
         for (int v : stones) stoneSet.add(v);
 
-        //It will be useful to lookup a values index
+        //It will be useful to lookup a values index TODO - can we avoid this?
         Map<Integer, Integer> idxs = new HashMap<>();
         for(int i=0; i<stones.length; i++) idxs.put(stones[i], i);
 
         // Table to keep a track of ways we can get from a->b
-        // e.g. if dp[1][3] == True, then there is a 2-step path from stones[1] to stones[3]
-        // Which must of ourse be size 2
+        // e.g. if dp[1][3] == True, then there is an n-step path from stones[1] to stones[3]
+        // where n === stones[3]-stones[1]
         boolean dp[][] = new boolean[stones.length][stones.length];
 
-        // There is always a bath from 0 to 1
+        // There is always a path from 0 to 1 (as per problem description)
         dp[0][1] = true;
 
         // For each row in the table
@@ -103,19 +93,23 @@ class Solution {
                 if (nMax < 0) continue;
 
                 //Is there a stone between nMin and nMax inclusive that has a path to us as true?
-                for (int v : stoneSet.tailSet(nMin)) {
-                    // If v is too big, quit - no more to look ut
+                for (int v : stoneSet.tailSet(nMin)) {              // Get stone values starting from nMin
+                    // If v is too big, quit - no more to look at
                     if (v > nMax) break;
                     if (dp[idxs.get(v)][y]) {
-                        //There is a path from <v> to stones[y]
-                        //and it's step size is in the range that allows us to go to stones[x]
+                        // There is a valid path from <v> to stones[y]
+                        // and it's step size is in the range stone[x] - stone[y] +/- 1
+
+                        // Otherwise note the path in the table
                         dp[y][x] = true;
+
                         // Is this the end goal? If so, we are done
-                        if (x == stones.length - 1) return true; //if yes we are done
+                        if (x == stones.length - 1) return true;
                     }
                 }
             }
         }
+        // We never found the end goal
         return false;
     }
 }
