@@ -42,6 +42,7 @@
 
 
 import java.util.HashMap;
+import java.util.SortedSet;
 
 class Question403 {
     //leetcode submit region begin(Prohibit modification and deletion)
@@ -49,53 +50,70 @@ class Solution {
     public boolean canCross(int[] stones) {
         /**
          *          0   1   3   5   6   8   12  17
-         *      0   X   1   X   X   X   X   X   X   (k=0 -> -1,0,1)
-         *      1   X   0   2   X   X   X   X   X   (k=1 [0,1] -> 0,1,2)
-         *      3   X   X   X   2   3   X   X   X   (k=2 [1,3] -> 1,2,3)
-         *      5   X   X   X   X   1   3   X   X   (k=2 [3,5] -> 1,2,3)
-         *      6   X   X   X   X   0   2   X   X   (k=1,3 [3,6][5,1] -> 0,1,2,3,4)
-         *      8   X   X   X   X   X   X   4   X   (k=2,3 [5,8][6,1] -> 1,2,3,4)
-         *      12  X   X   X   X   X   X   X   5   (k=5 [8,12] -> 3,4,5
+         *      0   X   T   X   X   X   X   X   X   (k=0 -> -1,0,1)
+         *      1   X   T   T   X   X   X   X   X   (k=1 [0,1] -> 0,1,2)
+         *      3   X   X   X   T   T   X   X   X   (k=2 [1,3] -> 1,2,3)
+         *      5   X   X   X   X   T   T   X   X   (k=2 [3,5] -> 1,2,3)
+         *      6   X   X   X   X   T   T   X   X   (k=1,3 [3,6][5,1] -> 0,1,2,3,4)
+         *      8   X   X   X   X   X   X   T   X   (k=2,3 [5,8][6,1] -> 1,2,3,4)
+         *      12  X   X   X   X   X   X   X   T   (k=5 [8,12] -> 3,4,5
+         *
          */
 
         // If element 1 is not 1, there can not be a path
         if (stones[1] != 1) return false;
+        // If there re only 2 stones, then there must be a path
+        if (stones.length == 2) return true;
 
-        // Dynamix table of partial solutions
-        int dp[][] = new int[stones.length][stones.length];
+        //For performance, we want to keep the stones in a sorrted structure
+        SortedSet<Integer> stoneSet = new TreeSet<>();
+        for (int v : stones) stoneSet.add(v);
 
-        // Initialise first row which is always just a 1 at idx 1
-        dp[0] = new int[stones.length];
-        for (int i=0; i<stones.length; i++) dp[0][i] = Integer.MIN_VALUE;
-        dp[0][1] = 1;
+        //It will be useful to lookup a values index
+        Map<Integer, Integer> idxs = new HashMap<>();
+        for(int i=0; i<stones.length; i++) idxs.put(stones[i], i);
+
+        // Table to keep a track of ways we can get from a->b
+        // e.g. if dp[1][3] == True, then there is a 2-step path from stones[1] to stones[3]
+        // Which must of ourse be size 2
+        boolean dp[][] = new boolean[stones.length][stones.length];
+
+        // There is always a bath from 0 to 1
+        dp[0][1] = true;
 
         // For each row in the table
         for (int y=1; y<stones.length; y++) {
-            //Calculate valid steps for this row
-            List<Integer> steps = new ArrayList<Integer>();
-            //Check each value in column index Y, from row 0 to y-1
-            for (int y2=0; y2<y; y2++) {
-                if (dp[y2][y] != Integer.MIN_VALUE) {
-                    steps.add(dp[y2][y]-1);
-                    steps.add(dp[y2][y]);
-                    steps.add(dp[y2][y]+1);
-                }
-            }
             //Our value
             int us = stones[y];
-            //For each column in row Y
-            for (int x=0; x<stones.length; x++) {
+            //For each column in this row
+            for (int x=y+1; x<stones.length; x++) {
                 //The target is the xth stone
                 int target = stones[x];
-                //Is there a step that gets us to target?
-                if (steps.contains(target-us)){
-                    //Yes, if the target is the last stone, we are done
-                    if (target == stones[stones.length-1]) return true;
-                    //Otherwise record this step
-                    dp[y][x] = (target-us);
+
+                //The step size to get to this target
+                int step = target-us;
+
+                //the minimum stone value we must come from is
+                int nMin = (us-step)-1;
+
+                //the maximum stone value we could have come from is
+                int nMax = (us-step)+1;
+
+                //if nmax < 0, there is no possibility of a result
+                if (nMax < 0) continue;
+
+                //Is there a stone between nMin and nMax inclusive that has a path to us as true?
+                for (int v : stoneSet.tailSet(nMin)) {
+                    // If v is too big, quit - no more to look ut
+                    if (v > nMax) break;
+                    if (dp[idxs.get(v)][y]) {
+                        //There is a path from <v> to stones[y]
+                        //and it's step size is in the range that allows us to go to stones[x]
+                        dp[y][x] = true;
+                        // Is this the end goal? If so, we are done
+                        if (x == stones.length - 1) return true; //if yes we are done
+                    }
                 }
-                //No, set this to min value (i.e. dont care)
-                else dp[y][x] = Integer.MIN_VALUE;
             }
         }
         return false;
