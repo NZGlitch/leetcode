@@ -69,13 +69,18 @@
 // Related Topics Array Hash Table 👍 420 👎 29
 
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.TreeSet;
+
 class Question1906 {
     //leetcode submit region begin(Prohibit modification and deletion)
 class Solution {
     public int[] minDifference(int[] nums, int[][] queries) {
-        //Naive approach
-        int[] res = new int[queries.length];
-        int[][] lookup = new int[nums.length][nums.length];
+        int[] res = new int[queries.length];                        //Result array
+        Map<Integer, Integer> lookup  = new HashMap<>();
+        int[][] lookup = new int[nums.length][nums.length];         //Lookup table of previous sub calcs
         for (int i=0; i<queries.length; i++) {
             res[i] = minDiffSub(lookup, nums, queries[i][0], queries[i][1]);
         }
@@ -92,19 +97,35 @@ class Solution {
             if (nums[s] == nums[e]) { // Both numbers are the same
                 lookup[s][e] = -1;
                 return lookup[s][e];
-            } else {                //Number differ - calculate diff
+            } else {                //Numbers differ - calculate diff
                 lookup[s][e] = Math.abs(nums[s]-nums[e]);
                 return lookup[s][e];
             }
         }
+
         //We have a gap greater than one - first, we recursivley find the answer for (s,e-1)
         int best = minDiffSub(lookup, nums, s, e-1);
+
+        //if nums[e] == nums[e-1] the answer is the same
+        if (nums[e] == nums[e-1]) {
+            lookup[s][e] = lookup[s][e-1];
+            return lookup[s][e];
+        }
+
+        int bmin = best == -1 ? Integer.MIN_VALUE : nums[e]-best;
+        int bmax = best == -1 ? Integer.MAX_VALUE : nums[e]+best;
 
         //now find best for (s,e),(s+1,e)....(e-1,e)
         for (int i=s; i<e; i++) {
             if (nums[i] == nums[e]) continue;           //ignore identical numbers
-            int amd = Math.abs(nums[i]-nums[e]);        //Calc min diff for this pair
-            if (best == -1 || amd < best) best = amd;   //Sve it as best if its better than previous
+
+            //Check val aginst bmin and max
+            if (nums[i] > bmin && nums[i] < bmax) {
+                //nums[i] is closer to nums[e] than best
+                best = Math.abs(nums[e]-nums[i]);
+                bmin = nums[e]-best;
+                bmax = nums[e]+best;
+            }
         }
 
         lookup[s][e] = best;
