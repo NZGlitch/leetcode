@@ -34,18 +34,13 @@ class Question49 {
     //leetcode submit region begin(Prohibit modification and deletion)
     import java.math.BigInteger;
 class Solution {
-    public BigInteger hash(String str) {
-        char[] chrs = str.toCharArray();
-        Arrays.sort(chrs);
-        BigInteger hash = BigInteger.ZERO;
-        for (int i=0; i<chrs.length; i++) hash =
-                (BigInteger.valueOf(26).multiply(hash)).add(BigInteger.valueOf(chrs[i]-61));
-        return hash;
-    }
+
     public List<List<String>> groupAnagrams(String[] strs) {
-        Map<BigInteger,List<String>> anagrams = new HashMap<>();
+        Map<Integer,List<String>> anagrams = new HashMap<>();
         for (String s: strs) {
-            BigInteger hash = hash(s);
+            char[] chrs = s.toCharArray();
+            Arrays.sort(chrs);
+            int hash = new String(chrs).hashCode();
             if (!anagrams.containsKey(hash)) anagrams.put(hash, new ArrayList());
             anagrams.get(hash).add(s);
         }
