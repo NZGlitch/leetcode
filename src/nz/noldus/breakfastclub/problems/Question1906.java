@@ -79,57 +79,78 @@ class Question1906 {
 class Solution {
     public int[] minDifference(int[] nums, int[][] queries) {
         int[] res = new int[queries.length];                        //Result array
-        Map<Integer, Integer> lookup  = new HashMap<>();
-        int[][] lookup = new int[nums.length][nums.length];         //Lookup table of previous sub calcs
+        Map<Integer, Integer> lookup  = new HashMap<>();            //Lookup table of previous results
         for (int i=0; i<queries.length; i++) {
             res[i] = minDiffSub(lookup, nums, queries[i][0], queries[i][1]);
         }
         return res;
-
     }
 
-    public int minDiffSub(int[][] lookup, int[] nums, int s, int e) {
-        //See if the answer is in lookup 0 if so, just return it
-        if (lookup[s][e] != 0) return lookup[s][e];
+    public int hashKey(int s, int e) {
+        return (100000*s) + e;
+    }
 
-        //See if our 'gap' is one - in that case, we just need to compare the two numbers
-        if (e == s+1) {
-            if (nums[s] == nums[e]) { // Both numbers are the same
-                lookup[s][e] = -1;
-                return lookup[s][e];
-            } else {                //Numbers differ - calculate diff
-                lookup[s][e] = Math.abs(nums[s]-nums[e]);
-                return lookup[s][e];
-            }
+    public int minDiffSub(Map<Integer,Integer> lookup, int[] nums, int s, int e) {
+        // Base Case: s == e
+        if (s == e) return -1;
+
+        // Base Case: See if the answer is in lookup, if so, just return it
+        if (lookup.containsKey(hashKey(s, e))) return lookup.get(hashKey(s, e));
+
+        int sn = s;
+        int en = e;
+        //move left index past identical values
+        while (sn + 1 <= en && nums[sn] == nums[sn + 1]) sn++;
+
+        // move right index past identical values
+        while (en - 1 >= sn && nums[en] == nums[en - 1]) en--;
+
+        //If our indexes equal, all numbers are the same
+        if (sn == en) {
+            lookup.put(hashKey(s, e), -1);
+            return -1;
         }
 
-        //We have a gap greater than one - first, we recursivley find the answer for (s,e-1)
-        int best = minDiffSub(lookup, nums, s, e-1);
-
-        //if nums[e] == nums[e-1] the answer is the same
-        if (nums[e] == nums[e-1]) {
-            lookup[s][e] = lookup[s][e-1];
-            return lookup[s][e];
+        // Base case: See if our 'gap' is one - in that case, we just need to compare the two numbers
+        // We know from the previous step they can not be equal
+        if (en == sn + 1) {
+            int val = Math.abs(nums[sn] - nums[en]);
+            lookup.put(hashKey(s, e), val);
+            return val;
         }
 
-        int bmin = best == -1 ? Integer.MIN_VALUE : nums[e]-best;
-        int bmax = best == -1 ? Integer.MAX_VALUE : nums[e]+best;
-
-        //now find best for (s,e),(s+1,e)....(e-1,e)
-        for (int i=s; i<e; i++) {
-            if (nums[i] == nums[e]) continue;           //ignore identical numbers
-
-            //Check val aginst bmin and max
-            if (nums[i] > bmin && nums[i] < bmax) {
-                //nums[i] is closer to nums[e] than best
-                best = Math.abs(nums[e]-nums[i]);
-                bmin = nums[e]-best;
-                bmax = nums[e]+best;
-            }
+        // Working case - split the problem into 3:
+        // s+1...e, s...e-1, (s,e)
+        // Ends first
+        int best = (nums[sn] == nums[en]) ? -1 : Math.abs(nums[sn] - nums[en]);
+        if (best == 1) {        //Can't beat this
+            lookup.put(hashKey(s, e), 1);
+            return 1;
         }
 
-        lookup[s][e] = best;
-        return lookup[s][e];
+        // Left side
+        int left = minDiffSub(lookup, nums, sn + 1, en);        //Left side
+        if (left == 1) {
+            lookup.put(hashKey(s, e), 1);
+            return 1;
+        }
+
+        if (best < 1) best = left;
+        else if (left > 0) best = Math.min(best, left);
+
+        //Right side
+        int right = minDiffSub(lookup, nums, sn, en - 1);       //Right side
+        if (right == 1) {
+            lookup.put(hashKey(s, e), 1);
+            return 1;
+        }
+
+        if (best < 1) best = right;
+        else if (right > 0) best = Math.min(best, right);
+
+        lookup.put(hashKey(s, e), best);
+
+        return best;
     }
 }
 //leetcode submit region end(Prohibit modification and deletion)
