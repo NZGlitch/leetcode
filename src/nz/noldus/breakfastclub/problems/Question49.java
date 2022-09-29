@@ -47,6 +47,7 @@ class Solution {
 
         return new ArrayList(anagrams.values());
     }
+
 }
 //leetcode submit region end(Prohibit modification and deletion)
 

@@ -68,20 +68,18 @@ class Solution {
     public int smallestDistancePair(int[] nums, int k) {
         Arrays.sort(nums);
         PriorityQueue<KNode> queue = new PriorityQueue<>();
-
         for (int i=0; i<nums.length-1; i++)
             queue.offer(new KNode(i,i+1, Math.abs(nums[i]-nums[i+1])));
-
         while (k>1) {
             KNode node = queue.poll();
             if (node.next < nums.length-1)
                 queue.offer(new KNode(node.root, node.next+1,Math.abs(nums[node.root] - nums[node.next+1])));
             k--;
         }
-
         KNode winner = queue.poll();
         return winner.dist;
     }
+
 }
 //leetcode submit region end(Prohibit modification and deletion)
 
